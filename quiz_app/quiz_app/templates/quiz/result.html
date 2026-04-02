@@ -1,0 +1,178 @@
+{% extends 'base.html' %}
+{% block title %}Result — CodeQuiz{% endblock %}
+
+{% block extra_css %}
+<style>
+.result-wrap { max-width: 720px; margin: 0 auto; }
+
+.result-hero {
+    text-align: center;
+    padding: 3rem 1rem 2rem;
+}
+
+.result-emoji { font-size: 4rem; margin-bottom: 1rem; }
+
+.result-title {
+    font-family: var(--font-head);
+    font-size: 2.5rem;
+    font-weight: 800;
+    margin-bottom: 0.5rem;
+}
+
+.result-sub { color: var(--muted); font-size: 0.9rem; }
+
+.score-ring {
+    display: flex;
+    justify-content: center;
+    margin: 2rem 0;
+}
+
+.ring-svg { width: 180px; height: 180px; }
+
+.score-stats {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 1rem;
+    margin-bottom: 2.5rem;
+}
+
+.score-stat {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 1.2rem;
+    text-align: center;
+}
+
+.score-stat-num {
+    font-family: var(--font-head);
+    font-size: 1.8rem;
+    font-weight: 800;
+    color: var(--accent);
+}
+
+.score-stat-label { font-size: 0.7rem; color: var(--muted); letter-spacing: 0.1em; }
+
+.review-title {
+    font-family: var(--font-head);
+    font-size: 1.2rem;
+    font-weight: 700;
+    margin-bottom: 1.2rem;
+    display: flex;
+    align-items: center;
+    gap: 0.8rem;
+}
+
+.review-title::after { content:''; flex:1; height:1px; background:var(--border); }
+
+.review-item {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 1.2rem;
+    margin-bottom: 0.8rem;
+    border-left: 3px solid;
+}
+
+.review-item.correct { border-left-color: var(--green); }
+.review-item.wrong { border-left-color: var(--red); }
+
+.review-q { font-size: 0.9rem; font-weight: 700; margin-bottom: 0.6rem; }
+.review-ans { font-size: 0.8rem; color: var(--muted); }
+.review-ans span { font-weight: 700; }
+.review-ans .correct-txt { color: var(--green); }
+.review-ans .wrong-txt { color: var(--red); }
+
+.explanation {
+    margin-top: 0.6rem;
+    font-size: 0.75rem;
+    color: var(--muted);
+    padding: 0.5rem 0.8rem;
+    background: var(--surface2);
+    border-radius: 6px;
+}
+
+.result-actions {
+    display: flex;
+    gap: 1rem;
+    justify-content: center;
+    margin-top: 2rem;
+    flex-wrap: wrap;
+}
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="result-wrap">
+    <div class="result-hero">
+        {% if percentage >= 80 %}
+            <div class="result-emoji">🏆</div>
+            <h1 class="result-title" style="color:var(--green)">Excellent!</h1>
+        {% elif percentage >= 60 %}
+            <div class="result-emoji">👍</div>
+            <h1 class="result-title" style="color:var(--yellow)">Good Job!</h1>
+        {% elif percentage >= 40 %}
+            <div class="result-emoji">📚</div>
+            <h1 class="result-title">Keep Practicing</h1>
+        {% else %}
+            <div class="result-emoji">💪</div>
+            <h1 class="result-title">Keep Going!</h1>
+        {% endif %}
+        <p class="result-sub">{{ language.name }} — {{ level.name }} Level</p>
+    </div>
+
+    <div class="score-ring">
+        <svg class="ring-svg" viewBox="0 0 180 180">
+            <circle cx="90" cy="90" r="75" fill="none" stroke="var(--surface2)" stroke-width="14"/>
+            <circle cx="90" cy="90" r="75" fill="none"
+                stroke="{% if percentage >= 80 %}var(--green){% elif percentage >= 60 %}var(--yellow){% else %}var(--red){% endif %}"
+                stroke-width="14"
+                stroke-dasharray="{{ (percentage / 100 * 471)|round }}, 471"
+                stroke-linecap="round"
+                transform="rotate(-90 90 90)"
+                style="transition: stroke-dasharray 1s ease;"/>
+            <text x="90" y="82" text-anchor="middle" font-family="Syne" font-weight="800" font-size="32" fill="var(--text)">{{ percentage }}%</text>
+            <text x="90" y="106" text-anchor="middle" font-family="Space Mono" font-size="11" fill="var(--muted)">ACCURACY</text>
+        </svg>
+    </div>
+
+    <div class="score-stats">
+        <div class="score-stat">
+            <div class="score-stat-num">{{ score }}</div>
+            <div class="score-stat-label">TOTAL SCORE</div>
+        </div>
+        <div class="score-stat">
+            <div class="score-stat-num" style="color:var(--green)">{{ correct }}</div>
+            <div class="score-stat-label">CORRECT</div>
+        </div>
+        <div class="score-stat">
+            <div class="score-stat-num" style="color:var(--red)">{{ total - correct }}</div>
+            <div class="score-stat-label">WRONG</div>
+        </div>
+    </div>
+
+    <h2 class="review-title">Review</h2>
+    {% for item in review %}
+    <div class="review-item {% if item.answer.is_correct %}correct{% else %}wrong{% endif %}">
+        <div class="review-q">Q{{ loop.index }}. {{ item.question.question }}</div>
+        <div class="review-ans">
+            Your answer: <span class="{% if item.answer.is_correct %}correct-txt{% else %}wrong-txt{% endif %}">
+                {{ item.answer.selected or '(skipped)' }}
+            </span>
+            {% if not item.answer.is_correct %}
+                · Correct: <span class="correct-txt">{{ item.answer.correct }}</span>
+            {% endif %}
+        </div>
+        {% if item.question.explanation %}
+        <div class="explanation">💡 {{ item.question.explanation }}</div>
+        {% endif %}
+    </div>
+    {% endfor %}
+
+    <div class="result-actions">
+        <a href="{{ url_for('quiz.quiz_home') }}" class="btn btn-primary">PLAY AGAIN</a>
+        <a href="{{ url_for('leaderboard.leaderboard') }}" class="btn btn-outline">LEADERBOARD</a>
+        <a href="{{ url_for('main.profile') }}" class="btn btn-outline">MY PROFILE</a>
+    </div>
+</div>
+{% endblock %}

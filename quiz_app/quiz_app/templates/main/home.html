@@ -1,0 +1,224 @@
+{% extends 'base.html' %}
+{% block title %}CodeQuiz — Master Your Code{% endblock %}
+
+{% block extra_css %}
+<style>
+.hero {
+    text-align: center;
+    padding: 5rem 1rem 4rem;
+}
+
+.hero-eyebrow {
+    font-size: 0.75rem;
+    letter-spacing: 0.2em;
+    color: var(--accent);
+    margin-bottom: 1.2rem;
+}
+
+.hero-title {
+    font-family: var(--font-head);
+    font-size: clamp(2.5rem, 6vw, 4.5rem);
+    font-weight: 800;
+    line-height: 1.1;
+    margin-bottom: 1.2rem;
+}
+
+.hero-title .highlight {
+    background: linear-gradient(135deg, var(--accent), var(--accent2));
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+}
+
+.hero-sub {
+    color: var(--muted);
+    font-size: 0.95rem;
+    max-width: 480px;
+    margin: 0 auto 2.5rem;
+}
+
+.hero-cta { display: flex; gap: 1rem; justify-content: center; flex-wrap: wrap; }
+.btn-lg { padding: 0.8rem 2rem; font-size: 0.9rem; }
+
+.stats-row {
+    display: flex;
+    gap: 1rem;
+    justify-content: center;
+    flex-wrap: wrap;
+    margin: 3rem 0;
+}
+
+.stat-box {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 1.2rem 2rem;
+    text-align: center;
+    min-width: 130px;
+}
+
+.stat-num {
+    font-family: var(--font-head);
+    font-size: 2rem;
+    font-weight: 800;
+    color: var(--accent);
+}
+
+.stat-label {
+    font-size: 0.7rem;
+    color: var(--muted);
+    letter-spacing: 0.1em;
+    margin-top: 0.2rem;
+}
+
+.section-title {
+    font-family: var(--font-head);
+    font-size: 1.4rem;
+    font-weight: 700;
+    margin-bottom: 1.5rem;
+    display: flex;
+    align-items: center;
+    gap: 0.8rem;
+}
+
+.section-title::after {
+    content: '';
+    flex: 1;
+    height: 1px;
+    background: var(--border);
+}
+
+.lang-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
+    gap: 1rem;
+    margin-bottom: 3rem;
+}
+
+.lang-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 1.5rem 1rem;
+    text-align: center;
+    text-decoration: none;
+    color: var(--text);
+    transition: all 0.25s;
+    cursor: pointer;
+}
+
+.lang-card:hover {
+    border-color: var(--accent);
+    transform: translateY(-3px);
+    box-shadow: 0 8px 32px rgba(124,92,252,0.2);
+}
+
+.lang-icon { font-size: 2.5rem; margin-bottom: 0.5rem; display: block; }
+.lang-name { font-family: var(--font-head); font-weight: 700; font-size: 1rem; }
+.lang-count { font-size: 0.7rem; color: var(--muted); margin-top: 0.2rem; }
+
+.levels-row {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 1rem;
+    margin-bottom: 3rem;
+}
+
+.level-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 1.5rem;
+    position: relative;
+    overflow: hidden;
+}
+
+.level-card::before {
+    content: '';
+    position: absolute;
+    top: 0; left: 0; right: 0;
+    height: 3px;
+}
+
+.level-easy::before { background: var(--green); }
+.level-medium::before { background: var(--yellow); }
+.level-hard::before { background: var(--red); }
+
+.level-title { font-family: var(--font-head); font-weight: 700; font-size: 1.1rem; margin-bottom: 0.5rem; }
+.level-pts { font-size: 0.75rem; color: var(--muted); }
+
+@media (max-width: 600px) {
+    .levels-row { grid-template-columns: 1fr; }
+}
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="hero">
+    <p class="hero-eyebrow">// SHARPEN YOUR SKILLS</p>
+    <h1 class="hero-title">
+        Test Your<br>
+        <span class="highlight">Coding Knowledge</span>
+    </h1>
+    <p class="hero-sub">
+        Challenge yourself with quizzes in Python, C++, Java, JavaScript, SQL and DSA. Compete on the leaderboard.
+    </p>
+    <div class="hero-cta">
+        <a href="{{ url_for('quiz.quiz_home') }}" class="btn btn-primary btn-lg">START QUIZ →</a>
+        <a href="{{ url_for('leaderboard.leaderboard') }}" class="btn btn-outline btn-lg">LEADERBOARD</a>
+    </div>
+</div>
+
+{% if current_user.is_authenticated and stats.total_games > 0 %}
+<div class="stats-row">
+    <div class="stat-box">
+        <div class="stat-num">{{ stats.total_games }}</div>
+        <div class="stat-label">GAMES PLAYED</div>
+    </div>
+    <div class="stat-box">
+        <div class="stat-num">{{ stats.total_score }}</div>
+        <div class="stat-label">TOTAL SCORE</div>
+    </div>
+    <div class="stat-box">
+        <div class="stat-num">{{ stats.avg_percentage }}%</div>
+        <div class="stat-label">AVG ACCURACY</div>
+    </div>
+    {% if stats.best_language %}
+    <div class="stat-box">
+        <div class="stat-num">{{ languages[stats.best_language].icon }}</div>
+        <div class="stat-label">BEST TOPIC</div>
+    </div>
+    {% endif %}
+</div>
+{% endif %}
+
+<h2 class="section-title">Pick a Language</h2>
+<div class="lang-grid">
+    {% for key, lang in languages.items() %}
+    <a href="{{ url_for('quiz.quiz_home') }}#{{ key }}" class="lang-card">
+        <span class="lang-icon">{{ lang.icon }}</span>
+        <div class="lang-name">{{ lang.name }}</div>
+        <div class="lang-count">3 difficulty levels</div>
+    </a>
+    {% endfor %}
+</div>
+
+<h2 class="section-title">Difficulty Levels</h2>
+<div class="levels-row">
+    <div class="level-card level-easy">
+        <div class="level-title">🟢 Easy</div>
+        <div class="level-pts">10 pts per correct answer · 30s per question</div>
+        <p style="margin-top:0.8rem;font-size:0.8rem;color:var(--muted)">Fundamentals, syntax, and basic concepts</p>
+    </div>
+    <div class="level-card level-medium">
+        <div class="level-title">🟡 Medium</div>
+        <div class="level-pts">20 pts per correct answer · 45s per question</div>
+        <p style="margin-top:0.8rem;font-size:0.8rem;color:var(--muted)">Intermediate patterns and problem solving</p>
+    </div>
+    <div class="level-card level-hard">
+        <div class="level-title">🔴 Hard</div>
+        <div class="level-pts">30 pts per correct answer · 60s per question</div>
+        <p style="margin-top:0.8rem;font-size:0.8rem;color:var(--muted)">Advanced concepts and edge cases</p>
+    </div>
+</div>
+{% endblock %}

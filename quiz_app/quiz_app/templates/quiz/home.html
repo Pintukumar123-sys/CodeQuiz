@@ -1,0 +1,110 @@
+{% extends 'base.html' %}
+{% block title %}Choose Quiz — CodeQuiz{% endblock %}
+
+{% block extra_css %}
+<style>
+.page-title { font-family:var(--font-head); font-size:2rem; font-weight:800; margin-bottom:0.5rem; }
+.page-sub { color:var(--muted); font-size:0.85rem; margin-bottom:3rem; }
+
+.quiz-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+    gap: 1.5rem;
+}
+
+.quiz-lang-card {
+    background: linear-gradient(180deg, rgba(124,92,252,0.08), rgba(19,19,26,0.96));
+    border: 1px solid rgba(255,255,255,0.1);
+    border-radius: 24px;
+    padding: 1.8rem;
+    transition: transform 0.25s ease, border-color 0.25s ease, box-shadow 0.25s ease;
+}
+
+.quiz-lang-card:hover {
+    border-color: rgba(124,92,252,0.55);
+    transform: translateY(-4px);
+    box-shadow: 0 24px 60px rgba(124,92,252,0.12);
+}
+
+.qlc-header {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    margin-bottom: 1.2rem;
+    padding-bottom: 1rem;
+    border-bottom: 1px solid var(--border);
+}
+
+.qlc-icon {
+    font-size: 2.2rem;
+    width: 54px; height: 54px;
+    display: flex; align-items: center; justify-content: center;
+    background: var(--surface2);
+    border-radius: 12px;
+    flex-shrink: 0;
+}
+
+.qlc-name { font-family:var(--font-head); font-size:1.2rem; font-weight:700; }
+.qlc-desc { font-size:0.75rem; color:var(--muted); }
+
+.level-btns { display:flex; flex-direction:column; gap:0.6rem; }
+
+.level-btn {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0.85rem 1.1rem;
+    border-radius: 14px;
+    text-decoration: none;
+    font-family: var(--font-mono);
+    font-size: 0.82rem;
+    border: 1px solid rgba(255,255,255,0.1);
+    transition: transform 0.25s ease, border-color 0.25s ease, box-shadow 0.25s ease;
+    background: rgba(255,255,255,0.04);
+    color: var(--text);
+    box-shadow: 0 10px 30px rgba(0,0,0,0.08);
+}
+
+.level-btn:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 18px 40px rgba(124,92,252,0.14);
+}
+
+.level-btn-easy:hover { border-color: var(--green); color: var(--green); }
+.level-btn-medium:hover { border-color: var(--yellow); color: var(--yellow); }
+.level-btn-hard:hover { border-color: var(--red); color: var(--red); }
+
+.level-btn-pts { font-size:0.7rem; opacity:0.6; }
+</style>
+{% endblock %}
+
+{% block content %}
+<h1 class="page-title">Choose Your Quiz</h1>
+<p class="page-sub">// Select a language and difficulty to start</p>
+
+<div class="quiz-grid">
+    {% for lang_key, lang in languages.items() %}
+    <div class="quiz-lang-card" id="{{ lang_key }}">
+        <div class="qlc-header">
+            <div class="qlc-icon">{{ lang.icon }}</div>
+            <div>
+                <div class="qlc-name">{{ lang.name }}</div>
+                <div class="qlc-desc">10 questions per session</div>
+            </div>
+        </div>
+        <div class="level-btns">
+            {% for lvl_key, lvl in levels.items() %}
+            <a href="{{ url_for('quiz.start_quiz', language=lang_key, level=lvl_key) }}"
+               class="level-btn level-btn-{{ lvl_key }}">
+                <span>
+                    {% if lvl_key == 'easy' %}🟢{% elif lvl_key == 'medium' %}🟡{% else %}🔴{% endif %}
+                    {{ lvl.name }}
+                </span>
+                <span class="level-btn-pts">{{ lvl.points }} pts/q · {{ lvl.time }}s</span>
+            </a>
+            {% endfor %}
+        </div>
+    </div>
+    {% endfor %}
+</div>
+{% endblock %}

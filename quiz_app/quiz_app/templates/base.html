@@ -1,0 +1,262 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}CodeQuiz{% endblock %}</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link href="https://fonts.googleapis.com/css2?family=Space+Mono:ital,wght@0,400;0,700;1,400&family=Syne:wght@400;600;700;800&display=swap" rel="stylesheet">
+    <style>
+        *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+        :root {
+            --bg: #0A0A0F;
+            --surface: #13131A;
+            --surface2: #1C1C26;
+            --border: rgba(255,255,255,0.08);
+            --text: #E8E8F0;
+            --muted: #6B6B80;
+            --accent: #7C5CFC;
+            --accent2: #00E5FF;
+            --green: #00FF88;
+            --red: #FF4757;
+            --yellow: #FFD060;
+            --radius: 12px;
+            --font-head: 'Syne', sans-serif;
+            --font-mono: 'Space Mono', monospace;
+        }
+
+        body {
+            background: radial-gradient(circle at top left, rgba(124,92,252,0.18), transparent 24%),
+                        radial-gradient(circle at bottom right, rgba(0,229,255,0.14), transparent 22%),
+                        var(--bg);
+            color: var(--text);
+            font-family: var(--font-mono);
+            min-height: 100vh;
+            line-height: 1.6;
+            overflow-x: hidden;
+        }
+
+        /* Background grid */
+        body::before {
+            content: '';
+            position: fixed;
+            inset: 0;
+            background-image:
+                linear-gradient(rgba(124,92,252,0.03) 1px, transparent 1px),
+                linear-gradient(90deg, rgba(124,92,252,0.03) 1px, transparent 1px);
+            background-size: 40px 40px;
+            pointer-events: none;
+            z-index: 0;
+        }
+
+        /* NAV */
+        nav {
+            position: sticky;
+            top: 0;
+            z-index: 100;
+            background: rgba(10,10,15,0.85);
+            backdrop-filter: blur(20px);
+            border-bottom: 1px solid var(--border);
+            padding: 0 2rem;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            height: 64px;
+        }
+
+        .nav-logo {
+            font-family: var(--font-head);
+            font-weight: 800;
+            font-size: 1.4rem;
+            color: var(--text);
+            text-decoration: none;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .nav-logo span { color: var(--accent); }
+
+        .nav-links { display: flex; align-items: center; gap: 0.5rem; }
+
+        .nav-link {
+            color: var(--muted);
+            text-decoration: none;
+            font-size: 0.8rem;
+            padding: 0.4rem 0.8rem;
+            border-radius: 6px;
+            transition: all 0.2s;
+            letter-spacing: 0.05em;
+        }
+
+        .nav-link:hover { color: var(--text); background: var(--surface2); }
+        .nav-link.active { color: var(--accent); }
+
+        .btn {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.4rem;
+            padding: 0.5rem 1.2rem;
+            border-radius: 8px;
+            font-family: var(--font-mono);
+            font-size: 0.8rem;
+            font-weight: 700;
+            cursor: pointer;
+            text-decoration: none;
+            transition: all 0.2s;
+            border: none;
+            letter-spacing: 0.05em;
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, var(--accent), var(--accent2));
+            color: #fff;
+            box-shadow: 0 14px 30px rgba(124,92,252,0.18);
+        }
+        .btn-primary:hover {
+            background: linear-gradient(135deg, #9070FF, #2DE6FF);
+            transform: translateY(-2px);
+        }
+
+        .btn-outline {
+            background: rgba(255,255,255,0.04);
+            border: 1px solid rgba(255,255,255,0.16);
+            color: var(--text);
+            backdrop-filter: blur(10px);
+        }
+        .btn-outline:hover { border-color: var(--accent); color: var(--accent); }
+
+        .btn-danger { background: var(--red); color: #fff; }
+        .btn-danger:hover { background: #ff6b7a; }
+
+        /* MAIN */
+        main {
+            position: relative;
+            z-index: 1;
+            max-width: 1100px;
+            margin: 0 auto;
+            padding: 2rem 1.5rem;
+        }
+
+        /* FLASH MESSAGES */
+        .flashes {
+            position: fixed;
+            top: 80px;
+            right: 1.5rem;
+            z-index: 200;
+            display: flex;
+            flex-direction: column;
+            gap: 0.5rem;
+            max-width: 360px;
+        }
+
+        .flash {
+            padding: 0.8rem 1.2rem;
+            border-radius: 8px;
+            font-size: 0.8rem;
+            border: 1px solid;
+            animation: slideIn 0.3s ease;
+        }
+
+        .flash-success { background: rgba(0,255,136,0.1); border-color: var(--green); color: var(--green); }
+        .flash-error { background: rgba(255,71,87,0.1); border-color: var(--red); color: var(--red); }
+        .flash-info { background: rgba(0,229,255,0.1); border-color: var(--accent2); color: var(--accent2); }
+        .flash-warning { background: rgba(255,208,96,0.1); border-color: var(--yellow); color: var(--yellow); }
+
+        @keyframes slideIn {
+            from { transform: translateX(20px); opacity: 0; }
+            to { transform: translateX(0); opacity: 1; }
+        }
+
+        /* CARD */
+        .card {
+            background: rgba(19,19,26,0.95);
+            border: 1px solid rgba(255,255,255,0.08);
+            border-radius: var(--radius);
+            padding: 1.5rem;
+            box-shadow: 0 24px 60px rgba(0,0,0,0.2);
+            transition: transform 0.25s ease, box-shadow 0.25s ease, border-color 0.25s ease;
+        }
+
+        .card:hover {
+            transform: translateY(-4px);
+            border-color: rgba(124,92,252,0.35);
+            box-shadow: 0 28px 80px rgba(0,0,0,0.25);
+        }
+
+        /* BADGE */
+        .badge {
+            display: inline-block;
+            padding: 0.2rem 0.6rem;
+            border-radius: 100px;
+            font-size: 0.7rem;
+            font-weight: 700;
+            letter-spacing: 0.08em;
+        }
+
+        .badge-easy { background: rgba(0,255,136,0.15); color: var(--green); }
+        .badge-medium { background: rgba(255,208,96,0.15); color: var(--yellow); }
+        .badge-hard { background: rgba(255,71,87,0.15); color: var(--red); }
+
+        footer {
+            text-align: center;
+            padding: 2rem;
+            color: var(--muted);
+            font-size: 0.75rem;
+            border-top: 1px solid var(--border);
+            margin-top: 4rem;
+        }
+    </style>
+    {% block extra_css %}{% endblock %}
+</head>
+<body>
+    <nav>
+        <a href="{{ url_for('main.home') }}" class="nav-logo">
+            <span>{</span>CodeQuiz<span>}</span>
+        </a>
+        <div class="nav-links">
+            <a href="{{ url_for('main.home') }}" class="nav-link {% if request.endpoint == 'main.home' %}active{% endif %}">HOME</a>
+            <a href="{{ url_for('quiz.quiz_home') }}" class="nav-link {% if 'quiz' in request.endpoint %}active{% endif %}">QUIZ</a>
+            <a href="{{ url_for('leaderboard.leaderboard') }}" class="nav-link {% if 'leaderboard' in request.endpoint %}active{% endif %}">BOARD</a>
+            {% if current_user.is_authenticated %}
+                <a href="{{ url_for('main.profile') }}" class="nav-link">PROFILE</a>
+                <a href="{{ url_for('auth.logout') }}" class="btn btn-outline" style="font-size:0.75rem;padding:0.35rem 0.9rem;">LOGOUT</a>
+            {% else %}
+                <a href="{{ url_for('auth.login') }}" class="btn btn-outline" style="font-size:0.75rem;padding:0.35rem 0.9rem;">LOGIN</a>
+                <a href="{{ url_for('auth.register') }}" class="btn btn-primary" style="font-size:0.75rem;padding:0.35rem 0.9rem;">REGISTER</a>
+            {% endif %}
+        </div>
+    </nav>
+
+    {% with messages = get_flashed_messages(with_categories=true) %}
+        {% if messages %}
+            <div class="flashes">
+                {% for cat, msg in messages %}
+                    <div class="flash flash-{{ cat }}">{{ msg }}</div>
+                {% endfor %}
+            </div>
+        {% endif %}
+    {% endwith %}
+
+    <main>
+        {% block content %}{% endblock %}
+    </main>
+
+    <footer>
+       <p>Designed & Developed by Pintu Kumar &amp; Mayank sharma</p>
+    </footer>
+
+    <script>
+        // Auto-hide flash messages
+        setTimeout(() => {
+            document.querySelectorAll('.flash').forEach(el => {
+                el.style.transition = 'opacity 0.5s';
+                el.style.opacity = '0';
+                setTimeout(() => el.remove(), 500);
+            });
+        }, 4000);
+    </script>
+    {% block extra_js %}{% endblock %}
+</body>
+</html>

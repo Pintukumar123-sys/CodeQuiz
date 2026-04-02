@@ -1,0 +1,178 @@
+{% extends 'base.html' %}
+{% block title %}Profile — CodeQuiz{% endblock %}
+
+{% block extra_css %}
+<style>
+.profile-header {
+    display: flex;
+    align-items: center;
+    gap: 2rem;
+    padding: 2rem;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 16px;
+    margin-bottom: 2rem;
+    flex-wrap: wrap;
+}
+
+.avatar {
+    width: 80px; height: 80px;
+    border-radius: 50%;
+    display: flex; align-items: center; justify-content: center;
+    font-family: var(--font-head);
+    font-size: 2rem;
+    font-weight: 800;
+    flex-shrink: 0;
+    border: 3px solid var(--border);
+}
+
+.profile-name { font-family:var(--font-head); font-size:1.6rem; font-weight:800; }
+.profile-since { font-size:0.75rem; color:var(--muted); margin-top:0.3rem; }
+
+.profile-stats {
+    margin-left: auto;
+    display: flex;
+    gap: 1.5rem;
+    text-align: center;
+    flex-wrap: wrap;
+}
+
+.p-stat-num { font-family:var(--font-head); font-size:1.5rem; font-weight:800; color:var(--accent); }
+.p-stat-label { font-size:0.68rem; color:var(--muted); letter-spacing:0.08em; }
+
+.section-title { font-family:var(--font-head); font-size:1.1rem; font-weight:700; margin-bottom:1rem; display:flex; align-items:center; gap:0.8rem; }
+.section-title::after { content:''; flex:1; height:1px; background:var(--border); }
+
+.breakdown-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+    gap: 1rem;
+    margin-bottom: 2.5rem;
+}
+
+.breakdown-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 1rem;
+    display: flex;
+    align-items: center;
+    gap: 0.8rem;
+}
+
+.bc-icon { font-size: 1.8rem; }
+.bc-name { font-size: 0.8rem; font-weight: 700; }
+.bc-stats { font-size: 0.72rem; color: var(--muted); }
+.bc-best { font-size: 0.72rem; color: var(--accent); }
+
+.history-table { background:var(--surface); border:1px solid var(--border); border-radius:12px; overflow:hidden; }
+
+.hist-row {
+    display: grid;
+    grid-template-columns: 1.5fr 0.8fr 0.8fr 0.6fr 0.8fr;
+    align-items: center;
+    padding: 0.8rem 1.2rem;
+    border-bottom: 1px solid var(--border);
+    font-size: 0.8rem;
+    gap: 0.5rem;
+}
+
+.hist-row:last-child { border-bottom: none; }
+.hist-row:hover { background: var(--surface2); }
+.hist-header { font-size:0.68rem; color:var(--muted); letter-spacing:0.1em; background:var(--surface2); }
+
+.hist-pct { font-weight:700; }
+.pct-high { color:var(--green); }
+.pct-mid { color:var(--yellow); }
+.pct-low { color:var(--red); }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="profile-header">
+    {% if current_user.avatar_url %}
+    <img class="avatar" src="{{ current_user.avatar_url }}" alt="Profile Photo" style="object-fit: cover;">
+    {% else %}
+    <div class="avatar" style="background: #4ECDC420; border-color: #4ECDC440; color: #4ECDC4">
+        {{ current_user.username[0].upper() }}
+    </div>
+    {% endif %}
+    <div>
+        <div class="profile-name">{{ current_user.username }}</div>
+        <div class="profile-since">{{ current_user.email }}</div>
+        <div class="profile-since">Member since {{ current_user.created_at.strftime('%B %Y') if current_user.created_at else 'Recently' }}</div>
+    </div>
+    <div class="profile-stats">
+        <div>
+            <div class="p-stat-num">{{ scores|length }}</div>
+            <div class="p-stat-label">GAMES</div>
+        </div>
+        <div>
+            <div class="p-stat-num">{{ scores | sum(attribute='score') }}</div>
+            <div class="p-stat-label">TOTAL PTS</div>
+        </div>
+        <div>
+            <div class="p-stat-num">
+                {% if scores %}
+                {{ (scores | sum(attribute='percentage') / scores|length)|round|int }}%
+                {% else %}—{% endif %}
+            </div>
+            <div class="p-stat-label">AVG ACC</div>
+        </div>
+    </div>
+</div>
+
+<!-- Photo Upload Form -->
+<div style="margin-bottom: 2rem; padding: 1rem; background: var(--surface); border: 1px solid var(--border); border-radius: 12px;">
+    <h3 style="margin-bottom: 1rem; font-family: var(--font-head); font-size: 1rem;">Update Profile Photo</h3>
+    <form action="{{ url_for('main.upload_photo') }}" method="post" enctype="multipart/form-data" style="display: flex; gap: 1rem; align-items: center;">
+        <input type="file" name="photo" accept="image/*" required style="flex: 1; padding: 0.5rem; border: 1px solid var(--border); border-radius: 6px;">
+        <button type="submit" style="padding: 0.5rem 1rem; background: var(--accent); color: white; border: none; border-radius: 6px; cursor: pointer;">Upload</button>
+    </form>
+</div>
+
+{% if breakdown %}
+<h2 class="section-title">By Language</h2>
+<div class="breakdown-grid">
+    {% for lang_key, data in breakdown.items() %}
+    {% if lang_key in languages %}
+    <div class="breakdown-card">
+        <div class="bc-icon">{{ languages[lang_key].icon }}</div>
+        <div>
+            <div class="bc-name">{{ languages[lang_key].name }}</div>
+            <div class="bc-stats">{{ data.games }} games · {{ data.avg_pct }}% avg</div>
+            <div class="bc-best">Best: {{ data.best }} pts</div>
+        </div>
+    </div>
+    {% endif %}
+    {% endfor %}
+</div>
+{% endif %}
+
+<h2 class="section-title">Recent Games</h2>
+{% if scores %}
+<div class="history-table">
+    <div class="hist-row hist-header">
+        <div>LANGUAGE</div><div>LEVEL</div><div>SCORE</div><div>CORRECT</div><div>ACCURACY</div>
+    </div>
+    {% for s in scores %}
+    <div class="hist-row">
+        <div>
+            {% if s.language in languages %}{{ languages[s.language].icon }}{% endif %}
+            {{ s.language|upper }}
+        </div>
+        <div><span class="badge badge-{{ s.level }}">{{ s.level|capitalize }}</span></div>
+        <div style="color:var(--accent);font-weight:700;">{{ s.score }}</div>
+        <div>{{ s.correct }}/{{ s.total }}</div>
+        <div class="hist-pct {% if s.percentage >= 80 %}pct-high{% elif s.percentage >= 60 %}pct-mid{% else %}pct-low{% endif %}">
+            {{ s.percentage }}%
+        </div>
+    </div>
+    {% endfor %}
+</div>
+{% else %}
+<div class="card" style="text-align:center;padding:3rem;color:var(--muted);">
+    No games played yet. <a href="{{ url_for('quiz.quiz_home') }}" style="color:var(--accent);">Start your first quiz →</a>
+</div>
+{% endif %}
+{% endblock %}

@@ -1,0 +1,262 @@
+{% extends 'base.html' %}
+{% block title %}Question {{ current }}/{{ total }} — CodeQuiz{% endblock %}
+
+{% block extra_css %}
+<style>
+.quiz-shell {
+    max-width: 720px;
+    margin: 0 auto;
+}
+
+.quiz-meta {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 1.5rem;
+    flex-wrap: wrap;
+    gap: 0.8rem;
+}
+
+.quiz-lang-pill {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    font-size: 0.8rem;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    padding: 0.3rem 0.8rem;
+    border-radius: 100px;
+}
+
+.timer-wrap {
+    display: flex;
+    align-items: center;
+    gap: 0.6rem;
+    font-size: 0.85rem;
+    font-weight: 700;
+}
+
+#timer-display {
+    font-family: var(--font-head);
+    font-size: 1.3rem;
+    color: var(--accent2);
+    min-width: 40px;
+    text-align: center;
+    transition: color 0.3s;
+}
+
+#timer-display.warning { color: var(--yellow); }
+#timer-display.danger { color: var(--red); }
+
+.progress-bar {
+    height: 4px;
+    background: var(--surface2);
+    border-radius: 2px;
+    margin-bottom: 2rem;
+    overflow: hidden;
+}
+
+.progress-fill {
+    height: 100%;
+    background: linear-gradient(90deg, var(--accent), var(--accent2));
+    border-radius: 2px;
+    transition: width 0.3s;
+}
+
+.timer-bar {
+    height: 3px;
+    background: var(--surface2);
+    border-radius: 2px;
+    margin-bottom: 2rem;
+    overflow: hidden;
+}
+
+.timer-fill {
+    height: 100%;
+    background: var(--accent2);
+    border-radius: 2px;
+    transition: width 1s linear, background-color 0.3s;
+}
+
+.q-number {
+    font-size: 0.75rem;
+    color: var(--muted);
+    letter-spacing: 0.1em;
+    margin-bottom: 0.8rem;
+}
+
+.q-text {
+    font-family: var(--font-head);
+    font-size: 1.3rem;
+    font-weight: 700;
+    line-height: 1.4;
+    margin-bottom: 2rem;
+}
+
+.options {
+    display: flex;
+    flex-direction: column;
+    gap: 0.8rem;
+    margin-bottom: 2rem;
+}
+
+.option-label {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    padding: 1rem 1.2rem;
+    background: var(--surface);
+    border: 2px solid var(--border);
+    border-radius: 10px;
+    cursor: pointer;
+    transition: all 0.2s;
+    user-select: none;
+}
+
+.option-label:hover {
+    border-color: var(--accent);
+    background: rgba(124,92,252,0.05);
+}
+
+.option-label input[type="radio"] { display: none; }
+
+.option-label.selected {
+    border-color: var(--accent);
+    background: rgba(124,92,252,0.1);
+}
+
+.option-key {
+    width: 32px; height: 32px;
+    background: var(--surface2);
+    border-radius: 6px;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 0.7rem;
+    font-weight: 700;
+    color: var(--muted);
+    flex-shrink: 0;
+    transition: all 0.2s;
+}
+
+.option-label.selected .option-key {
+    background: var(--accent);
+    color: #fff;
+}
+
+.option-text { font-size: 0.9rem; }
+
+.submit-wrap { text-align: right; }
+
+.btn-submit {
+    padding: 0.85rem 2rem;
+    font-size: 0.9rem;
+    opacity: 0.5;
+    pointer-events: none;
+    transition: all 0.2s;
+}
+
+.btn-submit.active {
+    opacity: 1;
+    pointer-events: all;
+}
+
+.score-badge {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    padding: 0.3rem 0.8rem;
+    border-radius: 100px;
+    font-size: 0.8rem;
+    color: var(--accent);
+    font-weight: 700;
+}
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="quiz-shell">
+    <div class="quiz-meta">
+        <div style="display:flex;align-items:center;gap:0.8rem;">
+            <div class="quiz-lang-pill">
+                {{ language.icon }} {{ language.name }}
+                <span class="badge badge-{{ level.name.lower() }}" style="margin-left:0.3rem;">{{ level.name }}</span>
+            </div>
+        </div>
+        <div style="display:flex;align-items:center;gap:1rem;">
+            <div class="score-badge">Score: {{ quiz.score }}</div>
+            <div class="timer-wrap">
+                ⏱ <span id="timer-display">{{ level.time }}</span>s
+            </div>
+        </div>
+    </div>
+
+    <div class="progress-bar">
+        <div class="progress-fill" style="width: {{ (current / total * 100)|round }}%"></div>
+    </div>
+    <div class="timer-bar">
+        <div class="timer-fill" id="timer-bar" style="width:100%"></div>
+    </div>
+
+    <p class="q-number">QUESTION {{ current }} OF {{ total }}</p>
+    <h2 class="q-text">{{ question.question }}</h2>
+
+    <form method="POST" id="quiz-form">
+        <div class="options">
+            {% set keys = ['A', 'B', 'C', 'D'] %}
+            {% for i, opt in enumerate(question.options) %}
+            <label class="option-label" onclick="selectOption(this)">
+                <input type="radio" name="answer" value="{{ opt }}" required>
+                <span class="option-key">{{ keys[i] }}</span>
+                <span class="option-text">{{ opt }}</span>
+            </label>
+            {% endfor %}
+        </div>
+        <div class="submit-wrap">
+            <button type="submit" class="btn btn-primary btn-submit" id="submit-btn">
+                {% if current == total %}FINISH →{% else %}NEXT →{% endif %}
+            </button>
+        </div>
+    </form>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+const totalTime = {{ level.time }};
+let timeLeft = totalTime;
+let timerInterval;
+
+const display = document.getElementById('timer-display');
+const bar = document.getElementById('timer-bar');
+const form = document.getElementById('quiz-form');
+
+function selectOption(el) {
+    document.querySelectorAll('.option-label').forEach(l => l.classList.remove('selected'));
+    el.classList.add('selected');
+    el.querySelector('input[type="radio"]').checked = true;
+    document.getElementById('submit-btn').classList.add('active');
+}
+
+timerInterval = setInterval(() => {
+    timeLeft--;
+    display.textContent = timeLeft;
+    bar.style.width = (timeLeft / totalTime * 100) + '%';
+
+    if (timeLeft <= 10) {
+        display.className = 'danger';
+        bar.style.background = 'var(--red)';
+    } else if (timeLeft <= 20) {
+        display.className = 'warning';
+        bar.style.background = 'var(--yellow)';
+    }
+
+    if (timeLeft <= 0) {
+        clearInterval(timerInterval);
+        // Auto-submit with no answer
+        const inputs = form.querySelectorAll('input[type="radio"]');
+        inputs.forEach(i => i.removeAttribute('required'));
+        form.submit();
+    }
+}, 1000);
+
+form.addEventListener('submit', () => clearInterval(timerInterval));
+</script>
+{% endblock %}
